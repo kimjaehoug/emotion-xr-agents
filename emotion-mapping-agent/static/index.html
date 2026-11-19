@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>감정 매핑 에이전트 대시보드</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2f3d;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --accent: #6c9eff;
+      --joy: #ffd166;
+      --sad: #6c8ebf;
+      --anger: #ef476f;
+      --fear: #9b5de5;
+      --surprise: #06d6a0;
+      --disgust: #84a59d;
+      --neutral: #adb5bd;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .container { max-width: 1040px; margin: 0 auto; padding: 2rem 1.5rem; }
+    header { margin-bottom: 2rem; }
+    header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.4rem; }
+    header p { color: var(--muted); font-size: 0.95rem; }
+    .input-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .field-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--muted);
+    }
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 0.875rem;
+      font-size: 0.95rem;
+      resize: vertical;
+      outline: none;
+      font-family: inherit;
+    }
+    textarea:focus { border-color: var(--accent); }
+    #inputText { min-height: 90px; font-size: 1rem; }
+    #memoryText { min-height: 180px; font-size: 0.88rem; line-height: 1.55; }
+    .memory-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+    .ghost-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.35rem 0.75rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .ghost-btn:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+    .btn-row { display: flex; gap: 0.75rem; margin-top: 1rem; align-items: center; }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .status { color: var(--muted); font-size: 0.85rem; }
+    .pipeline { display: none; }
+    .pipeline.visible { display: block; }
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-right: 0.5rem;
+    }
+    .step-title { font-weight: 600; font-size: 1rem; }
+    .step-agent { color: var(--muted); font-size: 0.8rem; margin-left: 0.5rem; }
+    .step-body { margin-top: 0.875rem; padding-left: 2.25rem; }
+    .emotion-card {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin: 0.25rem 0.25rem 0.25rem 0;
+    }
+    .emotion-기쁨 { background: rgba(255,209,102,0.2); color: var(--joy); }
+    .emotion-슬픔 { background: rgba(108,142,191,0.2); color: var(--sad); }
+    .emotion-분노 { background: rgba(239,71,111,0.2); color: var(--anger); }
+    .emotion-공포 { background: rgba(155,93,229,0.2); color: var(--fear); }
+    .emotion-놀람 { background: rgba(6,214,160,0.2); color: var(--surprise); }
+    .emotion-혐오 { background: rgba(132,165,157,0.2); color: var(--disgust); }
+    .emotion-중립 { background: rgba(173,181,189,0.2); color: var(--neutral); }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    @media (max-width: 720px) { .detail-grid { grid-template-columns: 1fr; } }
+    .detail-box, .sub-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.875rem;
+      margin-top: 0.75rem;
+    }
+    .detail-box h4, .sub-box h5 {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .sub-box h5 { font-size: 0.8rem; margin-top: 0; }
+    .reasoning { color: var(--muted); font-size: 0.88rem; margin-top: 0.4rem; }
+    .recall-case { color: var(--muted); font-size: 0.88rem; margin-top: 0.6rem; }
+    .recall-detail { margin: 0.25rem 0 0 1.2rem; font-size: 0.82rem; }
+    .recall-detail .emotion-card { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
+    .list-item { font-size: 0.86rem; color: var(--muted); margin: 0.25rem 0 0.25rem 1rem; }
+    .process-phase {
+      border-left: 3px solid var(--accent);
+      padding-left: 0.875rem;
+      margin: 0.75rem 0;
+    }
+    .process-phase .phase-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.35rem; }
+    .candidate-row {
+      display: grid;
+      grid-template-columns: 80px 60px 1fr;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.84rem;
+    }
+    .candidate-row:last-child { border-bottom: none; }
+    .fit-높음 { color: var(--surprise); }
+    .fit-중간 { color: var(--joy); }
+    .fit-낮음 { color: var(--muted); }
+    .status-준수 { color: var(--surprise); font-weight: 700; }
+    .status-위반 { color: var(--anger); font-weight: 700; }
+    .status-예외 { color: var(--joy); font-weight: 700; }
+    .status-해당없음 { color: var(--muted); }
+    .memory-preview {
+      background: var(--bg);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      white-space: pre-wrap;
+      max-height: 120px;
+      overflow: auto;
+    }
+    .final-result {
+      text-align: center;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, rgba(108,158,255,0.1), rgba(108,158,255,0.05));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+    }
+    .final-result .label { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .final-result .emotion { font-size: 2rem; font-weight: 800; }
+    .meta { color: var(--muted); font-size: 0.8rem; margin-top: 0.5rem; }
+    .error {
+      background: rgba(239,71,111,0.1);
+      border: 1px solid rgba(239,71,111,0.3);
+      color: var(--anger);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+      display: none;
+    }
+    .error.visible { display: block; }
+    .examples { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .example-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.3rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 400;
+      border-radius: 16px;
+    }
+    .example-btn:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+    .tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(108,158,255,0.15);
+      color: var(--accent);
+      margin-right: 0.35rem;
+    }
+    .user-row { display:flex; gap:0.5rem; align-items:center; margin-bottom:0.75rem; }
+    .user-row input { background: var(--surface); color: var(--text); border:1px solid var(--border); border-radius:6px; padding:0.35rem 0.6rem; width: 12rem; }
+    .mode-tag { font-size:0.75rem; color: var(--muted); }
+    .memory-section { margin-top: 1.5rem; background: var(--surface); border:1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+    .memory-section h3 { margin: 0 0 0.75rem; font-size: 1rem; }
+    .layer-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:0.5rem; margin-bottom: 1rem; }
+    .layer-grid div { border:1px solid var(--border); border-radius:8px; padding:0.5rem; text-align:center; font-size:0.75rem; color: var(--muted); }
+    .layer-grid b { display:block; font-size:1.1rem; color: var(--text); }
+    .alert-item { border-left: 3px solid var(--anger); padding: 0.35rem 0.6rem; margin-bottom: 0.4rem; font-size: 0.85rem; }
+    .correct-row { margin-top: 0.75rem; display:flex; flex-wrap:wrap; gap:0.35rem; align-items:center; font-size:0.8rem; color: var(--muted); }
+    .correct-row button { font-size: 0.75rem; padding: 0.2rem 0.55rem; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>감정 매핑 에이전트</h1>
+      <p>감정 문장 → KOTE 44 / 18대 분류 → 7대 기본감정 매핑 (에이전트 메모리 기반)</p>
+    </header>
+
+    <section class="input-section">
+      <div class="user-row">
+        <label class="field-label" for="userId" style="margin:0;">사용자 ID (사용자별 메모리)</label>
+        <input id="userId" value="U001" />
+        <span class="mode-tag" id="modeTag"></span>
+      </div>
+      <label class="field-label" for="inputText">감정 문장</label>
+      <textarea id="inputText" placeholder="감정이 담긴 문장을 입력하세요..."></textarea>
+      <div class="examples">
+        <button class="example-btn" data-text="시험에 합격해서 너무 기쁘고 뿌듯해!">합격 기쁨</button>
+        <button class="example-btn" data-text="친구가 나를 배신한 것 같아서 너무 화가 나고 실망스러워">배신 분노</button>
+        <button class="example-btn" data-text="내일 발표가 걱정돼서 잠이 안 와">발표 불안</button>
+        <button class="example-btn" data-text="갑자기 큰 소리가 나서 깜짝 놀랐어">깜짝 놀람</button>
+      </div>
+
+      <label class="field-label" for="memoryText" style="margin-top:1.25rem;">감정 매핑 규칙</label>
+      <textarea id="memoryText" placeholder="매핑 기준을 불러오는 중..."></textarea>
+      <div class="memory-actions">
+        <button type="button" class="ghost-btn" id="resetMemoryBtn">기본값 복원</button>
+        <button type="button" class="ghost-btn" id="saveMemoryBtn">브라우저에 저장</button>
+      </div>
+
+      <div class="btn-row">
+        <button id="analyzeBtn">분석 시작</button>
+        <span class="status" id="statusText"></span>
+      </div>
+      <div class="error" id="errorBox"></div>
+    </section>
+
+    <section class="pipeline" id="pipeline">
+      <div class="final-result" id="finalResult"></div>
+      <div id="stepsContainer"></div>
+    </section>
+
+    <section class="memory-section" id="memorySection">
+      <h3>에이전트 메모리 (분석 이력 로그 → 분석 사례 → 보정 경향 · 매핑 규칙 버전)</h3>
+      <div class="btn-row" style="margin-top:0;">
+        <button type="button" class="ghost-btn" id="refreshMemoryBtn">새로고침</button>
+        <button type="button" class="ghost-btn" id="consolidateBtn">메모리 정리</button>
+        <span class="status" id="memoryStatus"></span>
+      </div>
+      <div id="memoryBody"></div>
+    </section>
+  </div>
+
+  <script>
+    const inputText = document.getElementById("inputText");
+    const memoryText = document.getElementById("memoryText");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const resetMemoryBtn = document.getElementById("resetMemoryBtn");
+    const saveMemoryBtn = document.getElementById("saveMemoryBtn");
+    const statusText = document.getElementById("statusText");
+    const errorBox = document.getElementById("errorBox");
+    const pipeline = document.getElementById("pipeline");
+    const finalResult = document.getElementById("finalResult");
+    const stepsContainer = document.getElementById("stepsContainer");
+
+    let defaultMemory = "";
+    const userIdInput = document.getElementById("userId");
+    const memoryBody = document.getElementById("memoryBody");
+    const memoryStatus = document.getElementById("memoryStatus");
+    const SEVEN = ["기쁨", "슬픔", "분노", "공포", "놀람", "혐오", "중립"];
+    const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const userId = () => userIdInput.value.trim() || "default";
+    const LAYER_KO = { raw_events: "분석 이력 로그", cases: "분석 사례", verified_cases: "사용자 보정 사례", current_cards: "보정 경향", rulebook_versions: "매핑 규칙 버전" };
+    const RULE_KO = { negative_emotion_persistence: "부정 감정 지속", rulebook_conflict: "매핑 규칙·보정 불일치" };
+    const SEVERITY_KO = { high: "높음", medium: "보통", low: "낮음" };
+    const TYPE_KO = { procedural: "보정 경향", episodic: "이력 요약", semantic: "개인 특성" };
+    const STATUS_KO = { active: "적용 중", reviewed: "검토 통과 · 승인 대기", rejected: "반려", superseded: "이전 버전" };
+
+    async function fetchDefaultMemory() {
+      const res = await fetch("/api/mapping-memory", { cache: "no-store" });
+      if (!res.ok) throw new Error("매핑 기준을 불러오지 못했습니다.");
+      const data = await res.json();
+      defaultMemory = (data.content || "").trim();
+      if (!defaultMemory) throw new Error("서버 기본 매핑 기준이 비어 있습니다.");
+      return defaultMemory;
+    }
+
+    async function loadDefaultMemory() {
+      try {
+        // 서버가 HTML에 이미 넣어둔 값이 있으면 그걸 기본값으로 사용
+        if (memoryText.value && memoryText.value.trim()) {
+          defaultMemory = memoryText.value.trim();
+        } else {
+          await fetchDefaultMemory();
+          memoryText.value = defaultMemory;
+        }
+        const saved = localStorage.getItem("mapping_memory");
+        if (saved && saved.trim()) {
+          memoryText.value = saved;
+        }
+        memoryText.placeholder = "7대 감정 매핑 기준을 입력하세요...";
+      } catch (err) {
+        if (!memoryText.value.trim()) {
+          memoryText.placeholder = "매핑 기준 로드 실패 — 기본값 복원을 눌러주세요";
+          statusText.textContent = err.message;
+        }
+      }
+    }
+
+    resetMemoryBtn.addEventListener("click", async () => {
+      resetMemoryBtn.disabled = true;
+      statusText.textContent = "기본 매핑 기준 불러오는 중...";
+      try {
+        localStorage.removeItem("mapping_memory");
+        const content = await fetchDefaultMemory();
+        memoryText.value = content;
+        statusText.textContent = `기본값 복원 완료 (${content.length}자)`;
+      } catch (err) {
+        statusText.textContent = "";
+        errorBox.textContent = err.message;
+        errorBox.classList.add("visible");
+      } finally {
+        resetMemoryBtn.disabled = false;
+      }
+    });
+
+    saveMemoryBtn.addEventListener("click", () => {
+      localStorage.setItem("mapping_memory", memoryText.value);
+      statusText.textContent = "매핑 기준 저장됨";
+      setTimeout(() => { if (statusText.textContent === "매핑 기준 저장됨") statusText.textContent = ""; }, 2000);
+    });
+
+    document.querySelectorAll(".example-btn").forEach(btn => {
+      btn.addEventListener("click", () => { inputText.value = btn.dataset.text; });
+    });
+
+    function sourceLabel(key) {
+      const map = {
+        kote_44: "KOTE 44대 감정",
+        eighteen: "18대 감정",
+        seven_basic: "7대 감정",
+      };
+      return map[key] || key || "";
+    }
+
+    function emotionBadge(label) {
+      return `<span class="emotion-card emotion-${label}">${label}</span>`;
+    }
+
+    function renderList(items, empty = "없음") {
+      if (!items || !items.length) return `<div class="reasoning">${empty}</div>`;
+      return `<ul>${items.map(i => `<li class="list-item">${i}</li>`).join("")}</ul>`;
+    }
+
+    function renderConsiderations(items) {
+      if (!items || !items.length) return "";
+      return `<div class="sub-box"><h5>라벨 검토 내역</h5>${items.map(c =>
+        `<div class="reasoning"><span class="tag">${c.label || ""}</span>${c.why || ""}</div>`
+      ).join("")}</div>`;
+    }
+
+    function renderProcess(items) {
+      if (!items || !items.length) return `<div class="reasoning">과정 없음</div>`;
+      return items.map((p, idx) => {
+        const title = (p.title || p.phase || "").replace(/^단계\s*\d+\s*:?\s*/, "");
+        const finding = p.finding || p.conclusion || "";
+        const desc = p.description || "";
+        const extras = [];
+        if (desc && desc !== title && desc !== finding) extras.push(desc);
+        (p.actions || []).forEach(a => { if (a && a !== title && a !== finding) extras.push(a); });
+        (p.observations || []).forEach(o => { if (o) extras.push(o); });
+        return `
+          <div class="process-phase">
+            <div class="phase-title">${idx + 1}. ${title || "관찰"}</div>
+            ${finding ? `<div class="reasoning">${finding}</div>` : ""}
+            ${extras.map(x => `<div class="reasoning">${x}</div>`).join("")}
+          </div>`;
+      }).join("");
+    }
+    function renderClassification(output) {
+      const ta = output.text_analysis || {};
+      const process = output.analysis_process || [];
+      const kote = output.kote_44 || {};
+      const eighteen = output.eighteen || {};
+
+      return `
+        <div class="sub-box">
+          <h5>원문 분석</h5>
+          <div class="reasoning">핵심 표현: ${(ta.key_phrases || []).join(", ") || "-"}</div>
+          ${ta.speaker_intent ? `<div class="reasoning">화자 의도: ${ta.speaker_intent}</div>` : ""}
+          <div class="reasoning">정서 방향: ${ta.valence || "-"} · 각성도: ${ta.arousal || "-"}</div>
+        </div>
+        <div class="sub-box">
+          <h5>분류 과정</h5>
+          ${renderProcess(process)}
+        </div>
+        <div class="detail-grid">
+          <div class="detail-box">
+            <h4>KOTE 44대 분류 결과</h4>
+            ${emotionBadge(kote.primary)} <span class="tag">주 감정</span>
+            ${(kote.secondary || []).map(s => emotionBadge(s)).join("")}
+            <div class="reasoning">확률 ${(kote.confidence * 100).toFixed(0)}%</div>
+            <div class="reasoning">${kote.reasoning || ""}</div>
+            ${renderConsiderations(kote.label_considerations)}
+          </div>
+          <div class="detail-box">
+            <h4>18대 분류 결과</h4>
+            ${emotionBadge(eighteen.primary)} <span class="tag">주 감정</span>
+            ${(eighteen.secondary || []).map(s => emotionBadge(s)).join("")}
+            <div class="reasoning">확률 ${(eighteen.confidence * 100).toFixed(0)}%</div>
+            <div class="reasoning">${eighteen.reasoning || ""}</div>
+            ${renderConsiderations(eighteen.label_considerations)}
+          </div>
+        </div>`;
+    }
+
+    function renderMemoryStep(output) {
+      return `
+        <div class="reasoning">적용 규칙: ${output.source === "user" ? "직접 입력한 규칙 (이번 분석에만 적용)" : output.source}</div>
+        <div class="memory-preview">${output.memory_full || output.memory_preview || ""}</div>`;
+    }
+
+    function renderMapping(output) {
+      const process = output.process || [];
+      const candidates = output.candidate_review || [];
+      const details = output.mapping_details || [];
+      const decision = output.final_decision || {};
+      const rules = output.applied_memory_rules || [];
+
+      return `
+        <div class="sub-box">
+          <h5>적용된 에이전트 메모리 규칙</h5>
+          ${renderList(rules)}
+        </div>
+
+        <div class="sub-box">
+          <h5>매핑 과정</h5>
+          ${renderProcess(process)}
+        </div>
+
+        <div class="sub-box">
+          <h5>세부 감정 → 7대 연결 내역</h5>
+          ${details.map(d => `
+            <div class="reasoning" style="margin-bottom:0.6rem;">
+              <span class="tag">${sourceLabel(d.source_taxonomy)}</span>
+              ${d.source_label} (${d.role || "primary"}) → ${emotionBadge(d.mapped_to)}
+              ${d.reference_hint ? `<span class="tag">참고: ${d.reference_hint}</span>` : ""}
+              <div style="margin-top:0.25rem;">${d.rationale || ""}</div>
+            </div>
+          `).join("") || '<div class="reasoning">없음</div>'}
+        </div>
+
+        <div class="sub-box">
+          <h5>7대 감정 후보 검토</h5>
+          ${candidates.map(c => `
+            <div class="process-phase">
+              <div class="phase-title">
+                ${emotionBadge(c.emotion)}
+                <span class="fit-${c.fit_level || '중간'}">${c.fit_level || ""}</span>
+                <span class="verdict-${c.verdict || '보류'}">${c.verdict || ""}</span>
+              </div>
+              <div class="reasoning"><strong>찬성</strong></div>
+              ${renderList(c.supporting_evidence || [], "없음")}
+              <div class="reasoning"><strong>반대</strong></div>
+              ${renderList(c.opposing_evidence || [], "없음")}
+            </div>
+          `).join("") || '<div class="reasoning">없음</div>'}
+        </div>
+
+        <div class="sub-box">
+          <h5>최종 결정</h5>
+          <div style="margin-bottom:0.5rem;">${emotionBadge(output.final_emotion)}</div>
+          <div class="reasoning">${output.summary || ""}</div>
+          <div class="reasoning" style="margin-top:0.5rem;"><strong>핵심 근거</strong></div>
+          ${renderList(decision.key_reasons)}
+          ${decision.rejected_alternatives && decision.rejected_alternatives.length ? `
+            <div class="reasoning" style="margin-top:0.5rem;"><strong>기각된 대안</strong></div>
+            ${decision.rejected_alternatives.map(r =>
+              `<div class="reasoning">${emotionBadge(r.emotion)} — ${r.why_rejected || ""}</div>`
+            ).join("")}
+          ` : ""}
+          <div class="reasoning" style="margin-top:0.5rem;"><strong>확률 근거</strong>: ${decision.confidence_basis || "-"}</div>
+          <div class="reasoning"><strong>확률</strong> ${(output.confidence * 100).toFixed(0)}%</div>
+        </div>`;
+    }
+
+    function renderVerification(output) {
+      const checks = output.checks || [];
+      return `
+        <div class="sub-box">
+          <h5>종합</h5>
+          <div class="reasoning">${output.summary || ""}</div>
+          <div class="reasoning">점수 ${output.score ?? "-"}점 · ${output.grade || ""}</div>
+        </div>
+        <div class="sub-box">
+          <h5>항목별 검증</h5>
+          ${checks.map(c => `
+            <div class="candidate-row">
+              <div class="status-${c.status || "해당없음"}">${c.status || ""}</div>
+              <div style="grid-column: span 2;">
+                <div>${c.rule || ""}</div>
+                <div class="reasoning">${c.evidence || ""} ${c.source === "llm" ? '<span class="tag">LLM</span>' : '<span class="tag">시스템</span>'}</div>
+              </div>
+            </div>
+          `).join("") || '<div class="reasoning">검증 항목 없음</div>'}
+        </div>`;
+    }
+
+    function renderRecall(output) {
+      const cases = output.similar_cases || [];
+      const procs = output.procedures || [];
+      return `
+        <div class="sub-box">
+          <h5>유사 사례 (어휘 유사도·최근성·중요도 기반 관련도)</h5>
+          ${cases.map(c => `<div class="recall-case">
+            <div>${c.verified ? '<span class="tag">사용자 보정</span>' : '<span class="tag">이전 분석</span>'}
+              "${esc(c.text)}" <span class="mono">관련도 ${Number(c.score).toFixed(2)}</span></div>
+            <div class="recall-detail">${c.verified && c.first_label !== c.label
+              ? `처음 분석 ${emotionBadge(c.first_label)} → 사용자 보정 ${emotionBadge(c.label)}${c.note ? ` · 이유: ${esc(c.note)}` : ""}`
+              : `분석 결과 ${emotionBadge(c.label)}`}</div>
+          </div>`).join("") || '<div class="reasoning">없음</div>'}
+        </div>
+        <div class="sub-box">
+          <h5>사용자 보정 경향</h5>
+          ${procs.map(p => `<div class="reasoning">${esc(p.backstory)}</div>`).join("") || '<div class="reasoning">없음</div>'}
+        </div>`;
+    }
+
+    function renderRecord(output) {
+      const alerts = output.alerts || [];
+      return `<div class="reasoning">분석 결과를 메모리에 저장했습니다 <span class="mono">(${esc(output.case_id)})</span></div>
+        ${alerts.map(a => `<div class="alert-item">[${SEVERITY_KO[a.severity] || a.severity}] ${esc(a.message)}</div>`).join("")}`;
+    }
+
+    function renderSteps(steps) {
+      return steps.map(step => {
+        let body = "";
+        const n = step.name || "";
+        if (step.step === 1) body = `<div class="reasoning">"${esc(step.output.text)}"</div>`;
+        else if (n.startsWith("감정 매핑 규칙")) body = renderMemoryStep(step.output);
+        else if (n.startsWith("세부 감정")) body = renderClassification(step.output);
+        else if (n.startsWith("유사 사례")) body = renderRecall(step.output);
+        else if (n.startsWith("7대")) body = renderMapping(step.output);
+        else if (n.startsWith("매핑 규칙 준수")) body = renderVerification(step.output);
+        else if (n.startsWith("메모리 저장")) body = renderRecord(step.output);
+        const agent = step.agent ? `<span class="step-agent">· ${step.agent}</span>` : "";
+        return `
+          <div class="step">
+            <span class="step-num">${step.step}</span>
+            <span class="step-title">${step.name}</span>${agent}
+            <div class="step-body">${body}</div>
+          </div>`;
+      }).join("");
+    }
+
+    analyzeBtn.addEventListener("click", async () => {
+      const text = inputText.value.trim();
+      if (!text) return;
+
+      analyzeBtn.disabled = true;
+      statusText.textContent = "분석 중... (분류 → 매핑, 출력은 간결 모드)";
+      errorBox.classList.remove("visible");
+      pipeline.classList.remove("visible");
+
+      try {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text,
+            user_id: userId(),
+            // 기본 규칙집과 같으면 서버의 활성 버전을 쓰도록 보내지 않는다.
+            mapping_memory: memoryText.value.trim() && memoryText.value.trim() !== defaultMemory ? memoryText.value.trim() : null,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "분석 실패");
+
+        finalResult.innerHTML = `
+          <div class="label">최종 7대 기본감정</div>
+          <div class="emotion">${emotionBadge(data.final_emotion)}</div>
+          <div class="meta">${data.elapsed_ms}ms 소요 · ${data.mode === "offline" ? "규칙 기반 분석 (LLM 미연결)" : "LLM 분석"} · 감정 매핑 규칙 v${data.rulebook_version}
+            ${data.fallback_reason ? ` · ${esc(data.fallback_reason)}` : ""}</div>
+          <div class="correct-row">결과가 다르면 올바른 감정을 선택해 보정해 주세요 (이후 분석에 반영):
+            ${SEVEN.map(e => `<button class="ghost-btn" data-case="${esc(data.case_id)}" data-emo="${e}">${e}</button>`).join("")}
+          </div>`;
+        finalResult.querySelectorAll("[data-case]").forEach(b => b.addEventListener("click", async () => {
+          const r = await fetch("/api/memory/correction", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ case_id: b.dataset.case, correct_emotion: b.dataset.emo }),
+          });
+          statusText.textContent = r.ok ? `보정 결과('${b.dataset.emo}')를 저장했습니다` : "저장 실패";
+          loadMemory();
+        }));
+        stepsContainer.innerHTML = renderSteps(data.steps);
+        pipeline.classList.add("visible");
+        statusText.textContent = "분석 완료";
+        loadMemory();
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.classList.add("visible");
+        statusText.textContent = "";
+      } finally {
+        analyzeBtn.disabled = false;
+      }
+    });
+
+    async function loadMemory() {
+      try {
+        const [o, versions] = await Promise.all([
+          fetch(`/api/memory/${encodeURIComponent(userId())}`, { cache: "no-store" }).then(r => r.json()),
+          fetch("/api/rulebook", { cache: "no-store" }).then(r => r.json()),
+        ]);
+        memoryBody.innerHTML = `
+          <div class="layer-grid">${Object.entries(o.layers).map(([k, v]) => `<div>${esc(LAYER_KO[k] || k)}<b>${v}</b></div>`).join("")}</div>
+          ${(o.alerts || []).map(a => `<div class="alert-item">[${SEVERITY_KO[a.severity] || a.severity}] ${esc(RULE_KO[a.rule] || a.rule)} — ${esc(a.message)}</div>`).join("")}
+          <div class="detail-grid">
+            <div class="detail-box">
+              <h4>최근 분석 사례</h4>
+              ${(o.cases || []).slice(0, 8).map(c => `<div class="reasoning">${c.verified ? '<span class="tag">사용자 보정</span>' : ""}
+                "${esc(c.text)}" → ${emotionBadge(c.label)}</div>`).join("") || '<div class="reasoning">없음</div>'}
+            </div>
+            <div class="detail-box">
+              <h4>보정 경향 · 매핑 규칙 버전</h4>
+              ${(o.current_cards || []).map(c => `<div class="reasoning"><span class="tag">${esc(TYPE_KO[c.memory_type] || c.memory_type)}</span>${esc(c.backstory)}</div>`).join("") || '<div class="reasoning">아직 없음 (보정 후 \'메모리 정리\'를 실행하세요)</div>'}
+              <div class="reasoning" style="margin-top:0.5rem;"><strong>감정 매핑 규칙</strong></div>
+              ${versions.map(v => `<div class="reasoning">v${v.version} · ${esc(STATUS_KO[v.status] || v.status)} · ${esc(v.note || "")}</div>`).join("")}
+            </div>
+          </div>`;
+        document.getElementById("modeTag").textContent = `적용 중인 감정 매핑 규칙 v${o.active_rulebook_version}`;
+      } catch (err) {
+        memoryBody.innerHTML = `<div class="reasoning">메모리 조회 실패: ${esc(err.message)}</div>`;
+      }
+    }
+
+    document.getElementById("refreshMemoryBtn").addEventListener("click", loadMemory);
+    document.getElementById("consolidateBtn").addEventListener("click", async () => {
+      const r = await fetch(`/api/memory/${encodeURIComponent(userId())}/consolidate`, { method: "POST" }).then(r => r.json());
+      memoryStatus.textContent = `보정 경향 ${r.procedure_changes.length}건 갱신 · 중요도 낮은 사례 ${r.low_importance_cases.length}건`;
+      loadMemory();
+    });
+    userIdInput.addEventListener("change", loadMemory);
+
+    loadDefaultMemory();
+    loadMemory();
+  </script>
+</body>
+</html>

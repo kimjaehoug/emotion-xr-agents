@@ -1,0 +1,60 @@
+"""공통 Enum."""
+
+from enum import Enum
+
+
+class StateLevel(str, Enum):
+    NORMAL = "NORMAL"
+    WATCH = "WATCH"
+    ACTION_REQUIRED = "ACTION_REQUIRED"
+    UNKNOWN = "UNKNOWN"
+
+
+class PlanGoal(str, Enum):
+    MAINTAIN_CURRENT_STATE = "MAINTAIN_CURRENT_STATE"
+    REDUCE_COGNITIVE_BURDEN = "REDUCE_COGNITIVE_BURDEN"
+    SUPPORT_ATTENTION_RECOVERY = "SUPPORT_ATTENTION_RECOVERY"
+    REDUCE_ACCUMULATED_FATIGUE = "REDUCE_ACCUMULATED_FATIGUE"
+    REDUCE_CONTENT_STIMULATION = "REDUCE_CONTENT_STIMULATION"
+    CONTINUE_OBSERVATION = "CONTINUE_OBSERVATION"
+
+
+class PlanRoute(str, Enum):
+    NO_ACTION = "NO_ACTION"
+    OBSERVATION = "OBSERVATION"
+    CONTENT_RECOMMENDATION = "CONTENT_RECOMMENDATION"
+    XR_OPTIMIZATION = "XR_OPTIMIZATION"
+    BREAK_SUGGESTION = "BREAK_SUGGESTION"
+
+
+class ActionType(str, Enum):
+    OBSERVE = "OBSERVE"
+    KEEP_CURRENT_STATE = "KEEP_CURRENT_STATE"
+    RECOMMEND_CONTENT = "RECOMMEND_CONTENT"
+    UPDATE_XR_PARAMETER = "UPDATE_XR_PARAMETER"
+    SUGGEST_BREAK = "SUGGEST_BREAK"
+
+
+class XrParameter(str, Enum):
+    VISUAL_COMPLEXITY = "visual_complexity"
+    AUDIO_STIMULATION = "audio_stimulation"
+    INTERACTION_DENSITY = "interaction_density"
+    INFORMATION_DENSITY = "information_density"
+    MOTION_INTENSITY = "motion_intensity"
+
+
+class PlannerSource(str, Enum):
+    QWEN = "qwen3.5_9b"
+    FALLBACK = "rule_based_fallback"
+
+
+class ConfirmationStatus(str, Enum):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+
+
+class FeedbackEffect(str, Enum):
+    POSITIVE = "positive"
+    NEUTRAL = "neutral"
+    NEGATIVE = "negative"

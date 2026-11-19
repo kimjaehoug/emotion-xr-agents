@@ -1,0 +1,57 @@
+{
+  "state_report_id": "SR-DEMO-XR-001",
+  "user_id": "U001",
+  "session_id": "S-XR-001",
+  "timestamp": "2026-07-21T10:00:00+09:00",
+  "state_level": "ACTION_REQUIRED",
+  "baseline": {
+    "source": "personal",
+    "version": "v1",
+    "reliability": 0.84
+  },
+  "cognitive_gap": {
+    "cognitive_load": {
+      "status": "above_baseline",
+      "deviation": 0.24,
+      "trend": "increasing",
+      "persistent": true
+    },
+    "attention": {
+      "status": "below_baseline",
+      "deviation": -0.13,
+      "trend": "decreasing",
+      "persistent": false
+    },
+    "fatigue": {
+      "status": "above_baseline",
+      "deviation": 0.31,
+      "trend": "increasing",
+      "persistent": true
+    }
+  },
+  "emotion_context": {
+    "label": "frustration",
+    "intensity": 0.67,
+    "confidence": 0.81
+  },
+  "context_summary": {
+    "content_id": "C102",
+    "content_type": "education",
+    "difficulty": 0.8,
+    "visual_complexity": 0.75,
+    "audio_stimulation": 0.6,
+    "interaction_density": 0.7,
+    "elapsed_time_min": 25
+  },
+  "candidate_causes": [
+    {
+      "type": "content",
+      "factor": "high_visual_complexity",
+      "confidence": 0.74
+    }
+  ],
+  "analysis_confidence": 0.84,
+  "requires_response": true,
+  "additional_observation_required": false,
+  "warnings": []
+}

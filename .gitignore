@@ -1,0 +1,26 @@
+# 비밀값·로컬 설정
+.env
+.env.local
+
+# 실행 중 생성되는 메모리 DB
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+.DS_Store
