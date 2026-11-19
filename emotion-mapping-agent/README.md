@@ -20,7 +20,7 @@ cp .env.example .env
 
 | 환경 변수 | 설명 | 기본값 |
 |-----------|------|--------|
-| `LLM_BASE_URL` | OpenAI 호환 API URL | `http://localhost:11434/v1` |
+| `LLM_BASE_URL` | OpenAI 호환 API URL | `http://210.117.143.180:11525/v1` |
 | `LLM_API_KEY` | API 토큰 | (필수 설정) |
 | `LLM_MODEL` | 모델명 (비우면 자동 감지) | `` |
 | `PORT` | 웹 서버 포트 | `8080` |

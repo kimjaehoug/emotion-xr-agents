@@ -13,7 +13,7 @@ TAXONOMY_PATH = BASE_DIR / "taxonomies" / "emotions.json"
 # 프로젝트 .env를 우선 적용 (셸에 남은 이전 값보다 우선)
 load_dotenv(BASE_DIR / ".env", override=True)
 
-LLM_BASE_URL = os.getenv("LLM_BASE_URL", "http://localhost:11434/v1")
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "http://210.117.143.180:11525/v1")
 LLM_API_KEY = os.getenv("LLM_API_KEY", "dummy")
 LLM_MODEL = os.getenv("LLM_MODEL", "")
 LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT", "180"))
